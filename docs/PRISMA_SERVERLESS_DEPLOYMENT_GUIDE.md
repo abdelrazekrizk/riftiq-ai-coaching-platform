@@ -29,6 +29,7 @@ npx prisma init
 ```
 
 #### Configure `prisma/schema.prisma`
+
 ```prisma
 generator client {
   provider = "prisma-client-js"
@@ -81,7 +82,9 @@ model PerformanceMetric {
 ```
 
 #### Environment Configuration
+
 Create `.env`:
+
 ```env
 DATABASE_URL="postgresql://username:password@localhost:5432/riftiq_dev"
 AWS_REGION="us-east-1"
@@ -90,6 +93,7 @@ AWS_REGION="us-east-1"
 ### 3. Serverless Framework Configuration
 
 #### Create `serverless.ts`
+
 ```typescript
 import type { AWS } from '@serverless/typescript';
 
@@ -185,6 +189,7 @@ module.exports = serverlessConfiguration;
 ### 4. Lambda Function Implementation
 
 #### Create `src/agents/performance/handler.ts`
+
 ```typescript
 import { APIGatewayProxyHandler } from 'aws-lambda';
 import { PrismaClient } from '@prisma/client';
@@ -242,6 +247,7 @@ export const main: APIGatewayProxyHandler = async (event) => {
 ```
 
 #### Create `src/agents/coaching/handler.ts`
+
 ```typescript
 import { APIGatewayProxyHandler } from 'aws-lambda';
 import { PrismaClient } from '@prisma/client';
@@ -292,6 +298,7 @@ export const main: APIGatewayProxyHandler = async (event) => {
 ### 5. Database Migration & Deployment
 
 #### Local Development Setup
+
 ```bash
 # Generate Prisma client
 npx prisma generate
@@ -304,6 +311,7 @@ npx prisma db seed
 ```
 
 #### Production Database Setup
+
 ```bash
 # Set production DATABASE_URL
 export DATABASE_URL="postgresql://user:pass@prod-host:5432/riftiq"
@@ -326,6 +334,7 @@ serverless deploy --stage dev
 ```
 
 #### Production Deployment
+
 ```bash
 # Set production environment
 export DATABASE_URL="postgresql://prod-user:prod-pass@rds-endpoint:5432/riftiq"
@@ -340,6 +349,7 @@ serverless deploy --stage prod
 ### 7. Package.json Scripts
 
 Add to `package.json`:
+
 ```json
 {
   "scripts": {
@@ -357,6 +367,7 @@ Add to `package.json`:
 ### 8. Environment Management
 
 #### Development `.env`
+
 ```env
 DATABASE_URL="postgresql://localhost:5432/riftiq_dev"
 DB_PASSWORD="dev-password"
@@ -364,6 +375,7 @@ AWS_REGION="us-east-1"
 ```
 
 #### Production `.env.production`
+
 ```env
 DATABASE_URL="postgresql://prod-user:secure-pass@riftiq-postgres-prod.xyz.rds.amazonaws.com:5432/riftiq"
 DB_PASSWORD="production-secure-password"
@@ -373,6 +385,7 @@ AWS_REGION="us-east-1"
 ### 9. Testing Deployment
 
 #### Test API Endpoints
+
 ```bash
 # Test Performance Agent
 curl -X POST https://your-api-id.execute-api.us-east-1.amazonaws.com/dev/api/v1/performance/analyze \
@@ -388,12 +401,14 @@ curl -X POST https://your-api-id.execute-api.us-east-1.amazonaws.com/dev/api/v1/
 ### 10. Troubleshooting
 
 #### Common Issues
+
 - **Prisma Client not found**: Run `npx prisma generate`
 - **Database connection failed**: Check DATABASE_URL format
 - **Lambda timeout**: Increase timeout in serverless.ts
 - **CORS errors**: Ensure headers in all responses
 
 #### Debug Commands
+
 ```bash
 # Check Prisma client
 npx prisma studio

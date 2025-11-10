@@ -1,7 +1,9 @@
 # RiftIQ AWS Services Implementation Guide
+
 ## Complete Step-by-Step Setup for Novice Developers
 
 ### Document Information
+
 - **Project**: RiftIQ 6-Agent AI Coaching System
 - **Target Audience**: Novice AWS Developers
 - **Implementation Time**: 4-6 hours total
@@ -15,6 +17,7 @@
 This guide provides step-by-step instructions for implementing all AWS services used in the RiftIQ AI Coaching Platform. Each service is explained in simple terms with practical examples and real commands from the project.
 
 ### **What You'll Build**
+
 - 6 Lambda functions for AI coaching agents
 - REST and WebSocket APIs for real-time communication
 - Multi-database architecture (PostgreSQL + DynamoDB + Redis)
@@ -22,6 +25,7 @@ This guide provides step-by-step instructions for implementing all AWS services 
 - User authentication and monitoring
 
 ### **Prerequisites**
+
 - AWS Account with billing enabled
 - AWS CLI installed and configured
 - Node.js 22+ installed
@@ -32,32 +36,40 @@ This guide provides step-by-step instructions for implementing all AWS services 
 ## 📋 **IMPLEMENTATION ORDER**
 
 ### **Phase 1: Foundation (30 minutes)**
+
 1. IAM Roles and Permissions
 2. Basic AWS Configuration
 
 ### **Phase 2: Data Layer (60 minutes)**
+
 3. Amazon RDS PostgreSQL Database
 4. DynamoDB Tables
 5. ElastiCache Redis
 
 ### **Phase 3: Compute Layer (45 minutes)**
+
 6. AWS Lambda Functions
 7. Lambda Layers and Packaging
 
 ### **Phase 4: API Layer (45 minutes)**
+
 8. API Gateway REST API
 9. WebSocket API
 
 ### **Phase 5: Event Layer (30 minutes)**
+
 10. EventBridge Custom Bus
 
 ### **Phase 6: Authentication (30 minutes)**
+
 11. AWS Cognito User Pools
 
 ### **Phase 7: Monitoring (30 minutes)**
+
 12. CloudWatch and AWS Powertools
 
 ### **Phase 8: Advanced Features (60 minutes)**
+
 13. AWS Bedrock Integration
 14. Frontend Hosting (S3 + CloudFront)
 
@@ -66,6 +78,7 @@ This guide provides step-by-step instructions for implementing all AWS services 
 ## 🔧 **PHASE 1: FOUNDATION SETUP**
 
 ### **Step 1.1: Configure AWS CLI**
+
 ```bash
 # Install AWS CLI (if not already installed)
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
@@ -81,6 +94,7 @@ aws sts get-caller-identity
 ```
 
 ### **Step 1.2: Create IAM Role for Lambda Functions**
+
 ```bash
 # Create trust policy for Lambda
 cat > lambda-trust-policy.json << 'EOF'
@@ -121,6 +135,7 @@ aws iam attach-role-policy \
 ### **Step 2.1: Amazon RDS PostgreSQL Database**
 
 #### **What it is**: Primary database for user data, performance metrics, and analytics
+
 #### **Why we need it**: Persistent storage for structured data with ACID compliance
 
 ```bash
@@ -153,6 +168,7 @@ aws rds describe-db-instances \
 ```
 
 #### **Database Schema Setup**
+
 ```sql
 -- Connect to your database and run these commands
 -- Database: riftiq_coaching
@@ -227,6 +243,7 @@ CREATE INDEX idx_coaching_history_user_id ON coaching_history(user_id);
 ```
 
 #### **Testing Database Connection**
+
 ```bash
 # Test connection (replace with your endpoint)
 psql -h riftiq-coaching-db-prod.xxxxxxxxx.us-east-1.rds.amazonaws.com \
@@ -238,6 +255,7 @@ psql -h riftiq-coaching-db-prod.xxxxxxxxx.us-east-1.rds.amazonaws.com \
 ### **Step 2.2: DynamoDB Tables**
 
 #### **What it is**: NoSQL database for session state and real-time data
+
 #### **Why we need it**: Fast access for WebSocket connections and temporary data
 
 ```bash
@@ -278,6 +296,7 @@ aws dynamodb list-tables --query 'TableNames[?contains(@, `riftiq`)]'
 ```
 
 #### **Testing DynamoDB Tables**
+
 ```bash
 # Test writing to WebSocket connections table
 aws dynamodb put-item \
@@ -297,6 +316,7 @@ aws dynamodb get-item \
 ### **Step 2.3: ElastiCache Redis**
 
 #### **What it is**: In-memory cache for performance optimization
+
 #### **Why we need it**: Fast access to frequently used data and session caching
 
 ```bash
@@ -331,6 +351,7 @@ aws elasticache describe-cache-clusters \
 ```
 
 #### **Testing Redis Connection**
+
 ```bash
 # Install redis-cli (if not installed)
 sudo apt-get install redis-tools
@@ -351,9 +372,11 @@ redis-cli -h riftiq-cache-prod.xxxxxx.cache.amazonaws.com -p 6379 get test-key
 ### **Step 3.1: AWS Lambda Functions**
 
 #### **What it is**: Serverless compute for the 6 AI coaching agents
+
 #### **Why we need it**: Scalable, event-driven processing without server management
 
 #### **Create Lambda Function Package**
+
 ```bash
 # Create deployment package directory
 mkdir -p lambda-packages/performance-agent
@@ -418,6 +441,7 @@ zip -r performance-agent.zip . -x "*.git*" "node_modules/.cache/*"
 ```
 
 #### **Deploy Lambda Function**
+
 ```bash
 # Get IAM role ARN
 ROLE_ARN=$(aws iam get-role --role-name RiftIQ-Lambda-ExecutionRole --query 'Role.Arn' --output text)
@@ -450,6 +474,7 @@ cat response.json
 ```
 
 #### **Create Coaching Agent (WebSocket)**
+
 ```bash
 # Create coaching agent directory
 mkdir -p ../coaching-agent
@@ -550,6 +575,7 @@ aws lambda create-function \
 ### **Step 4.1: API Gateway REST API**
 
 #### **What it is**: HTTP API endpoints for the Lambda functions
+
 #### **Why we need it**: Provides HTTP interface for client applications
 
 ```bash
@@ -658,6 +684,7 @@ echo "API Gateway URL: https://$API_ID.execute-api.us-east-1.amazonaws.com/produ
 ```
 
 #### **Test API Gateway**
+
 ```bash
 # Test the performance endpoint
 curl -X POST \
@@ -669,6 +696,7 @@ curl -X POST \
 ### **Step 4.2: WebSocket API**
 
 #### **What it is**: Real-time bidirectional communication
+
 #### **Why we need it**: Live coaching delivery and real-time updates
 
 ```bash
@@ -745,6 +773,7 @@ echo "WebSocket URL: wss://$WS_API_ID.execute-api.us-east-1.amazonaws.com/produc
 ### **Step 5.1: EventBridge Custom Bus**
 
 #### **What it is**: Event routing system for agent coordination
+
 #### **Why we need it**: Decoupled communication between AI agents
 
 ```bash
@@ -779,6 +808,7 @@ aws lambda add-permission \
 ```
 
 #### **Test EventBridge**
+
 ```bash
 # Send test event
 aws events put-events \
@@ -799,6 +829,7 @@ aws events put-events \
 ### **Step 6.1: AWS Cognito User Pools**
 
 #### **What it is**: User authentication and management service
+
 #### **Why we need it**: Secure user registration, login, and session management
 
 ```bash
@@ -847,6 +878,7 @@ echo "Client Secret: $CLIENT_SECRET"
 ```
 
 #### **Test Cognito Setup**
+
 ```bash
 # Create test user
 aws cognito-idp admin-create-user \
@@ -871,6 +903,7 @@ aws cognito-idp admin-set-user-password \
 ### **Step 7.1: CloudWatch and AWS Powertools**
 
 #### **What it is**: Monitoring, logging, and alerting for your application
+
 #### **Why we need it**: Observability and troubleshooting capabilities
 
 ```bash
@@ -964,6 +997,7 @@ aws cloudwatch put-metric-alarm \
 ### **Step 8.1: AWS Bedrock Integration**
 
 #### **What it is**: Foundation models for AI-powered strategy recommendations
+
 #### **Why we need it**: Advanced AI capabilities for strategy optimization
 
 ```bash
@@ -1082,6 +1116,7 @@ aws lambda create-function \
 ### **Step 8.2: Frontend Hosting (S3 + CloudFront)**
 
 #### **What it is**: Static website hosting with global CDN
+
 #### **Why we need it**: Fast, scalable frontend delivery
 
 ```bash
@@ -1257,6 +1292,7 @@ echo "Frontend URL: http://$BUCKET_NAME.s3-website-us-east-1.amazonaws.com"
 ## ✅ **TESTING AND VALIDATION**
 
 ### **Complete System Test**
+
 ```bash
 # Test all components
 echo "Testing RiftIQ System Components..."
@@ -1299,6 +1335,7 @@ echo "System test complete!"
 ## 💰 **COST OPTIMIZATION**
 
 ### **Monthly Cost Estimates**
+
 - **Lambda**: $5-15 (based on usage)
 - **RDS PostgreSQL**: $15-25 (db.t3.micro)
 - **DynamoDB**: $2-8 (pay-per-request)
@@ -1311,6 +1348,7 @@ echo "System test complete!"
 **Total Estimated Cost**: $41-91/month
 
 ### **Cost Optimization Tips**
+
 1. Use reserved instances for RDS in production
 2. Enable DynamoDB auto-scaling
 3. Set up CloudWatch billing alerts
@@ -1325,6 +1363,7 @@ echo "System test complete!"
 ### **Common Issues and Solutions**
 
 #### **Lambda Function Errors**
+
 ```bash
 # Check function logs
 aws logs filter-log-events \
@@ -1338,6 +1377,7 @@ aws lambda update-function-code \
 ```
 
 #### **API Gateway CORS Issues**
+
 ```bash
 # Verify CORS configuration
 aws apigateway get-method-response \
@@ -1348,6 +1388,7 @@ aws apigateway get-method-response \
 ```
 
 #### **Database Connection Issues**
+
 ```bash
 # Check RDS status
 aws rds describe-db-instances \
@@ -1360,6 +1401,7 @@ aws ec2 describe-security-groups \
 ```
 
 #### **WebSocket Connection Issues**
+
 ```bash
 # Check WebSocket API status
 aws apigatewayv2 get-api --api-id $WS_API_ID
@@ -1373,6 +1415,7 @@ wscat -c wss://$WS_API_ID.execute-api.us-east-1.amazonaws.com/production
 ## 📚 **NEXT STEPS**
 
 ### **Phase 9: Production Optimization**
+
 1. Set up CI/CD pipeline with GitHub Actions
 2. Implement comprehensive monitoring and alerting
 3. Add automated testing and deployment
@@ -1380,6 +1423,7 @@ wscat -c wss://$WS_API_ID.execute-api.us-east-1.amazonaws.com/production
 5. Set up disaster recovery procedures
 
 ### **Phase 10: Advanced Features**
+
 1. Implement remaining scaffolded agents
 2. Add SageMaker ML models
 3. Set up custom domain names
@@ -1387,6 +1431,7 @@ wscat -c wss://$WS_API_ID.execute-api.us-east-1.amazonaws.com/production
 5. Add performance optimization
 
 ### **Learning Resources**
+
 - [AWS Lambda Developer Guide](https://docs.aws.amazon.com/lambda/)
 - [API Gateway Developer Guide](https://docs.aws.amazon.com/apigateway/)
 - [EventBridge User Guide](https://docs.aws.amazon.com/eventbridge/)

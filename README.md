@@ -280,16 +280,25 @@ Apache License - see [LICENSE](LICENSE) file for details
 - Use conventional commits
 - Update documentation for new features
 
----
+### Project Links
 
+- **🎬 Demo Video**: [`Hackathon Submission`](https://www.youtube.com/watch?v=8evpwrYBU7U)
+- **🚀 Live Demo**: Run Run `npm run deploy` in backend `npm start` in frontend and open RiftIQ AI coaching platform in your browser
+- **📖 Documentation**: See [`docs`](./docs/) for RiftIQ AWS Services Implementation Guide
+
+### Community & Support
+
+- **🐛 Issues**: [GitHub Issues](https://github.com/abdelrazekrizk/riftiq-ai-coaching-platform/issues)
+- **💬 Discussions**: [GitHub Discussions](https://github.com/abdelrazekrizk/riftiq-ai-coaching-platform/discussions)
+
+---
 <div align="center">
 
 ## Built with ❤️ for the Rift Rewind Hackathon 2025
 
 > *Transform your gaming with RiftIQ AI coaching platform for competitive gaming*
 
-
-**🚀 Ready to experience real-time code Coaching? Run `npm run deploy` and start the demo!**
+**🚀 Ready to experience real-time Gaming Coaching?  Run Live Demo and start Gaming with AI Coaching!**
 
 **🎯 Demo Ready** | **🚀 Production Deployed** | **🏆 Hackathon Complete** | **🔮 Future Ready**
 
