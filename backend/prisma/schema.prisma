@@ -1,0 +1,442 @@
+// RiftIQ AI Coaching System - Prisma Database Schema
+// Version: 1.0 | Database: PostgreSQL | Framework: Node.js 22 + TypeScript 5.7
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// USER MANAGEMENT TABLES
+// ============================================================================
+
+model User {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  username        String    @unique
+  passwordHash    String?
+  emailVerified   Boolean   @default(false)
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  lastLoginAt     DateTime?
+
+  // Relations
+  profile         UserProfile?
+  preferences     UserPreferences?
+  sessions        GameplaySession[]
+  analytics       Analytics[]
+  coachingHistory CoachingHistory[]
+  learningProgress LearningProgress[]
+  achievements    Achievement[]
+  socialConnections SocialConnection[] @relation("UserConnections")
+  friendConnections SocialConnection[] @relation("FriendConnections")
+
+  @@map("users")
+  @@index([email])
+  @@index([username])
+  @@index([createdAt])
+}
+
+model UserProfile {
+  id            String  @id @default(cuid())
+  userId        String  @unique
+  displayName   String
+  avatar        String?
+  gameRank      String
+  mainRole      String
+  skillLevel    SkillLevel @default(BEGINNER)
+  timezone      String  @default("UTC")
+  bio           String?
+  country       String?
+  language      String  @default("en")
+  publicProfile Boolean @default(true)
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_profiles")
+  @@index([userId])
+  @@index([skillLevel])
+  @@index([gameRank])
+}
+
+model UserPreferences {
+  id                    String  @id @default(cuid())
+  userId                String  @unique
+  coachingStyle         CoachingStyle @default(SUPPORTIVE)
+  coachingIntensity     Intensity @default(MEDIUM)
+  notificationsEnabled  Boolean @default(true)
+  emailNotifications    Boolean @default(true)
+  pushNotifications     Boolean @default(true)
+  
+  // Privacy Settings
+  profileVisibility     Visibility @default(PUBLIC)
+  shareAnalytics        Boolean @default(true)
+  shareProgress         Boolean @default(true)
+  allowFriendRequests   Boolean @default(true)
+  showOnlineStatus      Boolean @default(true)
+  
+  // Learning Preferences
+  preferredContentTypes String[]
+  learningStyle         LearningStyle @default(MIXED)
+  sessionDuration       Int @default(30) // minutes
+  difficulty            SkillLevel @default(INTERMEDIATE)
+  topics                String[]
+  avoidTopics           String[]
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_preferences")
+  @@index([userId])
+}
+
+// ============================================================================
+// GAMEPLAY & PERFORMANCE TABLES
+// ============================================================================
+
+model GameplaySession {
+  id               String    @id @default(cuid())
+  userId           String
+  gameMode         String
+  startTime        DateTime
+  endTime          DateTime?
+  duration         Int?      // seconds
+  status           SessionStatus @default(ACTIVE)
+  gameVersion      String
+  server           String
+  region           String
+  teamComposition  String[]
+  enemyComposition String[]
+  mapName          String
+  gameLength       Int?      // seconds
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // Relations
+  user             User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  performanceMetrics PerformanceMetrics?
+  analytics        Analytics[]
+  coachingHistory  CoachingHistory[]
+  learningProgress LearningProgress[]
+
+  @@map("gameplay_sessions")
+  @@index([userId])
+  @@index([gameMode])
+  @@index([startTime])
+  @@index([status])
+}
+
+model PerformanceMetrics {
+  id                String @id @default(cuid())
+  sessionId         String @unique
+  
+  // KDA Metrics
+  kills             Int
+  deaths            Int
+  assists           Int
+  kdaRatio          Float
+  killParticipation Float
+  firstBlood        Boolean @default(false)
+  
+  // Economy Metrics
+  goldEarned        Int
+  goldSpent         Int
+  goldPerMinute     Float
+  economyEfficiency Float
+  itemBuildScore    Float
+  farmingScore      Float
+  
+  // Objective Metrics
+  objectivesParticipated Int
+  objectivesSecured      Int
+  objectivesContested    Int
+  participationRate      Float
+  successRate            Float
+  impactScore            Float
+  
+  // Skill Metrics
+  accuracy          Float
+  reactionTime      Float
+  decisionMaking    Float
+  positioning       Float
+  timing            Float
+  adaptation        Float
+  
+  // Overall Metrics
+  overallScore      Float
+  rank              String
+  improvement       Float
+
+  // Relations
+  session GameplaySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("performance_metrics")
+  @@index([sessionId])
+  @@index([overallScore])
+  @@index([rank])
+}
+
+// ============================================================================
+// ANALYTICS & INSIGHTS TABLES
+// ============================================================================
+
+model Analytics {
+  id              String    @id @default(cuid())
+  userId          String
+  sessionId       String?
+  analysisType    AnalysisType
+  category        AnalyticsCategory
+  metrics         Json      // Flexible metrics storage
+  insights        Json      // Array of insights
+  recommendations String[]
+  confidence      Float
+  processingTime  Int       // milliseconds
+  createdAt       DateTime  @default(now())
+
+  // Relations
+  user    User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session GameplaySession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+
+  @@map("analytics")
+  @@index([userId])
+  @@index([sessionId])
+  @@index([analysisType])
+  @@index([category])
+  @@index([createdAt])
+}
+
+// ============================================================================
+// COACHING & AI TABLES
+// ============================================================================
+
+model CoachingHistory {
+  id             String    @id @default(cuid())
+  userId         String
+  sessionId      String?
+  coachingType   CoachingType
+  message        String
+  category       CoachingCategory
+  priority       Priority
+  deliveryTime   Int       // milliseconds
+  userResponse   String?
+  effectiveness  Float?
+  feedback       Int?      // 1-5 rating
+  createdAt      DateTime  @default(now())
+
+  // Relations
+  user    User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session GameplaySession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+
+  @@map("coaching_history")
+  @@index([userId])
+  @@index([sessionId])
+  @@index([coachingType])
+  @@index([category])
+  @@index([createdAt])
+}
+
+// ============================================================================
+// LEARNING & PROGRESS TABLES
+// ============================================================================
+
+model LearningProgress {
+  id            String    @id @default(cuid())
+  userId        String
+  contentId     String
+  pathId        String?
+  moduleId      String?
+  status        ProgressStatus @default(NOT_STARTED)
+  progress      Float     @default(0) // 0-100
+  timeSpent     Int       @default(0) // minutes
+  score         Float?
+  attempts      Int       @default(0)
+  lastAccessed  DateTime  @default(now())
+  completedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  user    User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session GameplaySession? @relation(fields: [contentId], references: [id], onDelete: SetNull)
+
+  @@map("learning_progress")
+  @@index([userId])
+  @@index([contentId])
+  @@index([pathId])
+  @@index([status])
+  @@index([lastAccessed])
+}
+
+model Achievement {
+  id            String    @id @default(cuid())
+  userId        String
+  achievementId String
+  name          String
+  description   String
+  category      String
+  type          AchievementType
+  rarity        Rarity
+  progress      Float     @default(0) // 0-100
+  maxProgress   Float     @default(100)
+  completed     Boolean   @default(false)
+  unlockedAt    DateTime?
+  createdAt     DateTime  @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("achievements")
+  @@index([userId])
+  @@index([achievementId])
+  @@index([type])
+  @@index([rarity])
+  @@index([completed])
+  @@unique([userId, achievementId])
+}
+
+// ============================================================================
+// SOCIAL & COMMUNITY TABLES
+// ============================================================================
+
+model SocialConnection {
+  id              String    @id @default(cuid())
+  userId          String
+  friendId        String
+  status          ConnectionStatus @default(PENDING)
+  relationship    RelationshipType @default(FRIEND)
+  strength        Float     @default(0) // 0-100
+  createdAt       DateTime  @default(now())
+  lastInteraction DateTime?
+  sharedActivities String[]
+
+  // Relations
+  user   User @relation("UserConnections", fields: [userId], references: [id], onDelete: Cascade)
+  friend User @relation("FriendConnections", fields: [friendId], references: [id], onDelete: Cascade)
+
+  @@map("social_connections")
+  @@index([userId])
+  @@index([friendId])
+  @@index([status])
+  @@index([relationship])
+  @@unique([userId, friendId])
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum SkillLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+enum CoachingStyle {
+  AGGRESSIVE
+  SUPPORTIVE
+  ANALYTICAL
+  MOTIVATIONAL
+}
+
+enum Intensity {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum Visibility {
+  PUBLIC
+  FRIENDS
+  PRIVATE
+}
+
+enum LearningStyle {
+  VISUAL
+  AUDITORY
+  KINESTHETIC
+  MIXED
+}
+
+enum SessionStatus {
+  ACTIVE
+  COMPLETED
+  ABANDONED
+}
+
+enum AnalysisType {
+  REAL_TIME
+  POST_GAME
+  HISTORICAL
+  TREND
+}
+
+enum AnalyticsCategory {
+  PERFORMANCE
+  BEHAVIOR
+  LEARNING
+  SOCIAL
+}
+
+enum CoachingType {
+  REAL_TIME
+  POST_GAME
+  STRATEGIC
+  EDUCATIONAL
+}
+
+enum CoachingCategory {
+  TACTICAL
+  STRATEGIC
+  MECHANICAL
+  MENTAL
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum ProgressStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  SKIPPED
+}
+
+enum AchievementType {
+  PERFORMANCE
+  SOCIAL
+  LEARNING
+  MILESTONE
+}
+
+enum Rarity {
+  COMMON
+  UNCOMMON
+  RARE
+  EPIC
+  LEGENDARY
+}
+
+enum ConnectionStatus {
+  PENDING
+  ACCEPTED
+  BLOCKED
+}
+
+enum RelationshipType {
+  FRIEND
+  TEAMMATE
+  MENTOR
+  STUDENT
+}
